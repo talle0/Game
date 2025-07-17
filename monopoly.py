@@ -6,7 +6,7 @@ import sys
 
 # 설정
 W, H = 1000, 700
-COLORS = [(231,76,60), (52,152,219), (46,204,113), (241,196,15)]
+COLORS = [(231,76,60), (52,152,219), (46,204,113), (241,196,15), (155,89,182), (230,126,34)]
 WHITE, BLACK, GRAY, LIGHT_GRAY, DARK_GRAY = (255,255,255), (0,0,0), (149,165,166), (236,240,241), (52,73,94)
 
 class Player:
@@ -33,7 +33,9 @@ class Game:
         self.log = []
         
         # 플레이어 생성
-        self.players = [Player(i) for i in range(4)]
+        # self.players = [Player(i) for i in range(4)]
+        # 4명 → 6명으로 변경
+        self.players = [Player(i) for i in range(6)]  # 6명 생성
         
         # 18칸 게임판 생성
         self.board = []
