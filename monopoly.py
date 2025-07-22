@@ -20,7 +20,7 @@ class Game:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((W, H))
-        pygame.display.set_caption("Monopoly")
+        pygame.display.set_caption("Disaster Boardgame")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, 24)
         self.small = pygame.font.Font(None, 18)
@@ -120,7 +120,7 @@ class Game:
         self.screen.fill(LIGHT_GRAY)
         
         # 제목
-        title = self.font.render("🎲 Monopoly Game", True, DARK_GRAY)
+        title = self.font.render("Disaster Boardgame", True, DARK_GRAY)
         self.screen.blit(title, (W//2 - 80, 30))
         
         # 게임판
@@ -134,8 +134,8 @@ class Game:
             self.screen.blit(txt, (x-5, y-5))
         
         # 중앙 로고
-        logo = self.font.render("MONOPOLY", True, DARK_GRAY)
-        self.screen.blit(logo, (310, 290))
+        logo = self.font.render("Disaster BoardGame", True, DARK_GRAY)
+        self.screen.blit(logo, (270, 290))
         
         # 플레이어
         for i, p in enumerate(self.players):
