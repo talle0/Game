@@ -25,8 +25,24 @@ class Game:
         self.font = pygame.font.Font(None, 24)
         self.small = pygame.font.Font(None, 18)
         
+        # 배경 이미지 로드 시도
+        try:
+            # 업로드된 이미지를 읽어서 사용
+            # 실제 사용시에는 아래 파일명을 업로드한 파일명으로 변경하세요
+            import os
+            if os.path.exists("disaster.jpg"):
+                self.bg_image = pygame.image.load("disaster.jpg")
+                self.bg_image = pygame.transform.scale(self.bg_image, (400, 300))
+            else:
+                # 첨부된 이미지를 직접 로드하는 방법
+                # 파일이 같은 폴더에 있다면 파일명을 여기에 입력하세요
+                self.bg_image = None
+        except:
+            self.bg_image = None
+            print("배경 이미지를 로드할 수 없습니다. 기본 배경을 사용합니다.")
+        
         # 게임 상태
-        self.turn = 0  # 0부터 시작 (Player 1)
+        self.turn = 0
         self.dice = 1
         self.state = 0  # 0:대기, 1:굴리기, 2:이동, 3:턴완료
         self.timer = self.turn_timer = 0
@@ -53,11 +69,29 @@ class Game:
             p.y = p.ty = self.board[0][1]
         
         self.log_msg("=== Game Started! ===")
-        self.log_msg(f"{self.players[0].name}'s turn")  # 첫 번째 플레이어 (인덱스 0)
+        self.log_msg(f"{self.players[0].name}'s turn")
     
     def log_msg(self, msg):
         self.log.append(msg)
         if len(self.log) > 8: self.log.pop(0)
+    
+    def draw_disaster_background(self):
+        """게임판 중앙에 배경 그리기"""
+        if self.bg_image:
+            # 업로드된 배경 이미지 사용
+            self.screen.blit(self.bg_image, (150, 150))
+            
+            # 이미지 위에 반투명 오버레이로 칸들이 잘 보이게 함
+            overlay = pygame.Surface((400, 300))
+            overlay.set_alpha(60)
+            overlay.fill((255, 255, 255))
+            self.screen.blit(overlay, (150, 150))
+        else:
+            # 기본 배경 (단순한 재해 테마)
+            overlay = pygame.Surface((400, 300))
+            overlay.set_alpha(50)
+            overlay.fill((100, 100, 100))
+            self.screen.blit(overlay, (150, 150))
     
     def handle_click(self, pos):
         if 620 <= pos[0] <= 670 and 210 <= pos[1] <= 260 and self.state == 0:
@@ -123,8 +157,11 @@ class Game:
         title = self.font.render("Disaster Boardgame", True, DARK_GRAY)
         self.screen.blit(title, (W//2 - 80, 30))
         
-        # 게임판
+        # 게임판 테두리
         pygame.draw.rect(self.screen, DARK_GRAY, (120, 120, 460, 360), 3)
+        
+        # 배경 그리기
+        self.draw_disaster_background()
         
         # 칸 그리기
         for i, (x, y) in enumerate(self.board):
@@ -134,8 +171,22 @@ class Game:
             self.screen.blit(txt, (x-5, y-5))
         
         # 중앙 로고
-        logo = self.font.render("Disaster BoardGame", True, DARK_GRAY)
-        self.screen.blit(logo, (270, 290))
+        if self.bg_image:
+            # 배경 이미지가 있을 때는 텍스트를 더 눈에 띄게
+            logo_text = "Disaster BoardGame"
+            text_surface = self.font.render(logo_text, True, WHITE)
+            text_rect = text_surface.get_rect(center=(350, 290))
+            
+            # 텍스트 배경 박스
+            bg_rect = text_rect.copy()
+            bg_rect.inflate_ip(20, 10)
+            pygame.draw.rect(self.screen, (0, 0, 0, 180), bg_rect)
+            pygame.draw.rect(self.screen, WHITE, bg_rect, 2)
+            
+            self.screen.blit(text_surface, text_rect)
+        else:
+            logo = self.font.render("Disaster BoardGame", True, DARK_GRAY)
+            self.screen.blit(logo, (270, 290))
         
         # 플레이어
         for i, p in enumerate(self.players):
