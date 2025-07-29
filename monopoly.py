@@ -19,6 +19,7 @@ class Player:
         self.color = COLORS[i]
         self.pos = self.x = self.y = self.tx = self.ty = 0
         self.moving = self.steps = self.timer = 0
+        self.skip = False  # 재난으로 인한 턴 스킵 여부
 
 class Game:
     def __init__(self):
@@ -48,12 +49,15 @@ class Game:
             p.x = p.y = p.tx = self.board[0][0]
             p.y = p.ty = self.board[0][1]
 
+        self.disaster_spaces = [3, 9, 15]
+
         self.log_msg("=== Game Started! ===")
         self.log_msg(f"{self.players[0].name}'s turn")
 
     def log_msg(self, msg):
         self.log.append(msg)
-        if len(self.log) > 8: self.log.pop(0)
+        if len(self.log) > 8:
+            self.log.pop(0)
 
     def handle_click(self, pos):
         if 620 <= pos[0] <= 670 and 210 <= pos[1] <= 260 and self.state == 0:
@@ -89,12 +93,17 @@ class Game:
                         self.move_next()
                 else:
                     p.moving = 0
+                    self.check_disaster(p)
                     self.state = 3
                     self.turn_timer = now + 1000
                     self.log_msg(f"{p.name} done!")
 
         elif self.state == 3 and now >= self.turn_timer:
             self.turn = (self.turn + 1) % 4
+            if self.players[self.turn].skip:
+                self.log_msg(f"{self.players[self.turn].name} skips this turn!")
+                self.players[self.turn].skip = False
+                self.turn = (self.turn + 1) % 4
             self.state = 0
             self.log_msg(f"{self.players[self.turn].name}'s turn")
 
@@ -109,6 +118,17 @@ class Game:
             p.steps -= 1
             p.timer = pygame.time.get_ticks() + 300
 
+    def check_disaster(self, p):
+        if p.pos in self.disaster_spaces:
+            event = random.choice(["한 턴 쉼", "2칸 후퇴", "아무 일도 없음"])
+            self.log_msg(f"재난 발생! {p.name}: {event}")
+            if event == "한 턴 쉼":
+                p.skip = True
+            elif event == "2칸 후퇴":
+                p.pos = (p.pos - 2) % len(self.board)
+                p.tx, p.ty = self.board[p.pos]
+                self.log_msg(f"{p.name}이(가) 2칸 뒤로!")
+
     def draw_dot_background(self):
         self.screen.fill(WHITE)
         for x in range(0, W, 40):
@@ -119,17 +139,13 @@ class Game:
         self.draw_dot_background()
 
         pygame.draw.rect(self.screen, WHITE, (120, 120, 460, 360))
-
-
-        # 제목
         title = self.font.render("Disaster Boardgame", True, DARK_GRAY)
         self.screen.blit(title, (W//2 - 150, 30))
-
-        # 게임판
         pygame.draw.rect(self.screen, DARK_GRAY, (120, 120, 460, 360), 4)
 
         for i, (x, y) in enumerate(self.board):
-            pygame.draw.circle(self.screen, WHITE, (x, y), 25)
+            color = RED if i in self.disaster_spaces else WHITE
+            pygame.draw.circle(self.screen, color, (x, y), 25)
             pygame.draw.circle(self.screen, BLACK, (x, y), 25, 2)
             txt = self.small.render(str(i+1), True, DARK_GRAY)
             self.screen.blit(txt, (x - 5, y - 5))
@@ -144,11 +160,9 @@ class Game:
 
         x = 620
         curr = self.players[self.turn]
-
         txt = self.font.render(f"Current: {curr.name}", True, curr.color)
         self.screen.blit(txt, (x, 150))
 
-        # 주사위 (코드 기반 그리기)
         dice_color = BLACK if self.state == 0 else GRAY
         pygame.draw.rect(self.screen, dice_color, (x, 210, 50, 50), border_radius=8)
         pygame.draw.rect(self.screen, WHITE, (x, 210, 50, 50), 2, border_radius=8)
@@ -177,7 +191,6 @@ class Game:
             txt = self.small.render(f"{p.name}: Space {p.pos+1}", True, color)
             self.screen.blit(txt, (x, 320 + i*20))
 
-        # 로그
         txt = self.font.render("Game Log:", True, BLACK)
         self.screen.blit(txt, (x, 450))
         for i, msg in enumerate(self.log):
